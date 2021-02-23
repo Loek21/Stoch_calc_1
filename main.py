@@ -18,7 +18,7 @@ def historic_volatility():
     """
     Determines the historical volatility based on daily returns
     :param NONE:
-    :return: Historical volatility in %
+    :return: Historical volatility
     """
     closing = []
     with open('historicdata.csv', newline='') as f:
