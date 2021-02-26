@@ -5,6 +5,7 @@ import csv
 S_0 = 64.46
 C_0 = 6.7
 R = 0.04 # %
+K = 65
 
 # Maturity 17 september 2021, work, holiday, trading days until expiry respectively.
 W_days = 161
@@ -33,5 +34,3 @@ def historic_volatility():
     hist_vol = np.std(returns_list)*np.sqrt(len(closing))
 
     return hist_vol
-
-print(historic_volatility())
