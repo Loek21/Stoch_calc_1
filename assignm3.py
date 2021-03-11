@@ -8,6 +8,7 @@ from copy import deepcopy
 S_0 = 64.46
 C_0 = 6.7
 R = 0.0004
+#R=0.04
 K = 65
 
 # Maturity 17 september 2021, work, holiday, trading days until expiry respectively.
@@ -18,9 +19,12 @@ T_years = T_days/255
 
 # continuously compounded interest rate
 r = np.log(1+R)
-r = 0
+print(r)
+#r = 0
+
 # historic volatility
 sigma = historic_volatility()
+
 
 
 def binomial_tree(S_0, K, T, r, sigma, N):
@@ -129,18 +133,33 @@ def binomial_tree_visual(stock_tree, option_tree):
 
 if __name__ == "__main__":
     N = 3
+
+    # american version
     stock_tree = binomial_tree(S_0, K, T_years, r, sigma, N)
+    put_tree = put_price_tree(deepcopy(stock_tree), K, T_years, r, sigma, N, False)
+    blackscholes = put_price_BS(K, S_0, 0, T_years, sigma, r)
+    binomial_tree_visual(stock_tree, put_tree)
+
+    # european version
     put_tree = put_price_tree(deepcopy(stock_tree), K, T_years, r, sigma, N, True)
     blackscholes = put_price_BS(K, S_0, 0, T_years, sigma, r)
     binomial_tree_visual(stock_tree, put_tree)
 
     put_price_list = []
+    put_price_list_europ = []
     fig = plt.figure()
     ax = fig.add_subplot(111)
     for N in range(1,201):
+
+        # get the american option values
+        stock_tree = binomial_tree(S_0, K, T_years, r, sigma, N)
+        put_tree = put_price_tree(stock_tree, K, T_years, r, sigma, N, False)
+        put_price_list.append(put_tree[0,0])
+
+        # get the european data as well for good measure
         stock_tree = binomial_tree(S_0, K, T_years, r, sigma, N)
         put_tree = put_price_tree(stock_tree, K, T_years, r, sigma, N, True)
-        put_price_list.append(put_tree[0,0])
+        put_price_list_europ.append(put_tree[0,0])
 
     blackscholes = put_price_BS(K, S_0, 0, T_years, sigma, r)
     blackscholes_list = list(blackscholes for i in range(200))
@@ -153,6 +172,7 @@ if __name__ == "__main__":
     # ax.legend()
     # fig.savefig("Convergence.jpg")
     ax.plot(x, abs(np.array(blackscholes_list)-np.array(put_price_list)))
+    ax.plot(x, abs(np.array(blackscholes_list)-np.array(put_price_list_europ)))
     ax.set_xlabel("Binomial Tree steps N")
     ax.set_ylabel("Error in option price in $")
     ax.set_title("Convergence of the error in option pricing \n between the Black-Scholes and Binomial tree method")
