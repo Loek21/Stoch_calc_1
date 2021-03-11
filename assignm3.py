@@ -8,7 +8,6 @@ from copy import deepcopy
 S_0 = 64.46
 C_0 = 6.7
 R = 0.0004
-#R=0.04
 K = 65
 
 # Maturity 17 september 2021, work, holiday, trading days until expiry respectively.
@@ -19,13 +18,10 @@ T_years = T_days/255
 
 # continuously compounded interest rate
 r = np.log(1+R)
-print(r)
 #r = 0
 
 # historic volatility
 sigma = historic_volatility()
-
-
 
 def binomial_tree(S_0, K, T, r, sigma, N):
     """
@@ -128,7 +124,7 @@ def binomial_tree_visual(stock_tree, option_tree):
     #print the tree with stock values (option values)
     for i in range(rows):
         for j in range(0,i+1):
-            print(f"{stock_tree[i][j]} ({option_tree[i][j]})", end=" ")
+            print(f"{round(stock_tree[i][j],2)} ({round(option_tree[i][j],4)})", end=" ")
         print()
 
 if __name__ == "__main__":
@@ -145,11 +141,12 @@ if __name__ == "__main__":
     blackscholes = put_price_BS(K, S_0, 0, T_years, sigma, r)
     binomial_tree_visual(stock_tree, put_tree)
 
+    # get prices for different N and compare to Black-Scholes + plot
     put_price_list = []
     put_price_list_europ = []
     fig = plt.figure()
     ax = fig.add_subplot(111)
-    for N in range(1,201):
+    for N in range(1,101):
 
         # get the american option values
         stock_tree = binomial_tree(S_0, K, T_years, r, sigma, N)
@@ -162,19 +159,44 @@ if __name__ == "__main__":
         put_price_list_europ.append(put_tree[0,0])
 
     blackscholes = put_price_BS(K, S_0, 0, T_years, sigma, r)
-    blackscholes_list = list(blackscholes for i in range(200))
-    x = np.linspace(1,200,200)
-    # ax.plot(x, blackscholes_list, label="Price Black-Scholes", zorder=1)
-    # ax.plot(x, put_price_list, label="Price Binomial Tree", zorder=0)
-    # ax.set_xlabel("Binomial Tree steps N")
-    # ax.set_ylabel("Put option price $")
-    # ax.set_title("Convergence of the Binomial Tree method for determining option prices")
-    # ax.legend()
-    # fig.savefig("Convergence.jpg")
-    ax.plot(x, abs(np.array(blackscholes_list)-np.array(put_price_list)))
-    ax.plot(x, abs(np.array(blackscholes_list)-np.array(put_price_list_europ)))
+    blackscholes_list = list(blackscholes for i in range(100))
+    x = np.linspace(1,100,100)
+    ax.plot(x, put_price_list, label="Option value (American)", lw=0.9)
+    ax.plot(x, put_price_list_europ, label="Option value (European)", lw=0.9)
+    ax1 = ax.twinx()
+    ax1.plot(x, abs((np.array(blackscholes_list) - np.array(put_price_list))/np.array(blackscholes_list))*100, "red", label="Relative error (American)", lw=0.9)
+    ax1.plot(x, abs((np.array(blackscholes_list) - np.array(put_price_list_europ))/np.array(blackscholes_list))*100, "purple", label="Relative error (European)", lw=0.9)
     ax.set_xlabel("Binomial Tree steps N")
-    ax.set_ylabel("Error in option price in $")
-    ax.set_title("Convergence of the error in option pricing \n between the Black-Scholes and Binomial tree method")
-    # fig.savefig("Convergence_error.jpg")
+    ax.set_ylabel("Put option price $")
+    ax.set_title("Convergence of the Binomial Tree method for determining option values \n and its relative error compared to the Black-Scholes model")
+    fig.legend(loc="upper right", bbox_to_anchor=(1,1), bbox_transform=ax.transAxes)
+    ax1.set_ylabel("Relative error in %")
     plt.show()
+
+
+    # for more detail, plot the difference between american and european options
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(x, np.array(put_price_list)-np.array(put_price_list_europ), lw=0.9)
+    ax.set_xlabel("Binomial Tree steps N")
+    ax.set_ylabel("Price difference in $")
+    ax.set_title("American and European put option price difference")
+    plt.show()
+
+    # for more detail, plot the difference between american and black-scholes
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    ax.plot(x, np.array(put_price_list)-np.array(blackscholes), lw=0.9)
+    ax.set_xlabel("Binomial Tree steps N")
+    ax.set_ylabel("Price difference in $")
+    ax.set_title("American and European put option price difference")
+    plt.show()
+
+    # specifically get the value of early exercise by subtracting black scholes from american option, set N as you like
+    N = 50
+    stock_tree = binomial_tree(S_0, K, T_years, r, sigma, N)
+    european_value = put_price_tree(deepcopy(stock_tree), K, T_years, r, sigma, N, True)[0,0]
+    american_value = put_price_tree(deepcopy(stock_tree), K, T_years, r, sigma, N, False)[0,0]
+    early_exercise_value = american_value - blackscholes
+    diff = american_value - european_value
+    print("Early exercise value:", early_exercise_value, american_value, european_value, diff)
