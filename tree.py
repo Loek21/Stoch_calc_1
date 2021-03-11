@@ -21,7 +21,6 @@ r = np.log(1+R)
 # historic volatility
 sigma = historic_volatility()
 
-
 def binomial_tree(S_0, K, T, r, sigma, N):
     """
     Builds the Binomial tree for the stock price.
@@ -95,7 +94,7 @@ def put_price_BS(K, S, t, T, sigma, r):
     d1 = (np.log(S/K)+(r+0.5*sigma**2)*(T-t))/(sigma*np.sqrt(T-t))
     d2 = d1 - sigma*np.sqrt(T-t)
     price = np.exp(-r*(T-t))*K*norm.cdf(-d2)-S*norm.cdf(-d1)
-    
+
     return price
 
 if __name__ == "__main__":
@@ -110,15 +109,12 @@ if __name__ == "__main__":
     blackscholes = put_price_BS(K, S_0, 0, T_years, sigma, r)
     blackscholes_list = list(blackscholes for i in range(100))
     x = np.linspace(1,100,100)
-    # ax.plot(x, blackscholes_list, label="Price Black-Scholes", zorder=1)
-    # ax.plot(x, put_price_list, label="Price Binomial Tree", zorder=0)
-    # ax.set_xlabel("Binomial Tree steps N")
-    # ax.set_ylabel("Put option price $")
-    # ax.set_title("Convergence of the Binomial Tree method for determining option prices")
-    # ax.legend()
-    # fig.savefig("Convergence.jpg")
-    ax.plot(x, abs(np.array(blackscholes_list)-np.array(put_price_list)))
+    ax.plot(x, put_price_list, label="Option value (Binomial Tree)")
+    ax1 = ax.twinx()
+    ax1.plot(x, abs((np.array(blackscholes_list) - np.array(put_price_list))/np.array(blackscholes_list))*100, "orange", label="Relative error")
     ax.set_xlabel("Binomial Tree steps N")
-    ax.set_ylabel("Error in option price in $")
-    ax.set_title("Convergence of the error in option pricing \n between the Black-Scholes and Binomial tree method")
-    fig.savefig("Convergence_error.jpg")
+    ax.set_ylabel("Put option price $")
+    ax.set_title("Convergence of the Binomial Tree method for determining option values \n and its relative error compared to the Black-Scholes model")
+    fig.legend(loc="upper right", bbox_to_anchor=(1,1), bbox_transform=ax.transAxes)
+    ax1.set_ylabel("Relative error in %")
+    fig.savefig("Combined.jpg")
