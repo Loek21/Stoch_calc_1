@@ -18,7 +18,7 @@ r = np.log(1+R)
 def historic_volatility():
     """
     Determines the historical volatility based on daily returns
-    :param NONE:
+    :param No args but does need csv file containing historic rate of returns:
     :return: Historical volatility
     """
     closing = []
